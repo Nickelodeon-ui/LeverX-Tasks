@@ -1,11 +1,14 @@
 import string
+import functools
 
+@functools.total_ordering
 class Version:
     # Evaluation of version hierarchy
     VERSION_ORDER = {"a": 0, "alpha": 0, "beta": 1, "b": 1, "rc": 2, "release candidate": 2, "r": 3, "release": 3}
 
     def __init__(self, version):
         self.version = version
+        self.v_contains = version.split(".")
     
     def prepare_char(self, v_char):
         if "-" in v_char:
@@ -29,10 +32,8 @@ class Version:
         return v_char
 
     def __lt__(self, version_2):
-        v_contains = self.version.split(".")
-        v2_contains = version_2.version.split(".")
 
-        for v_char, v2_char in zip(v_contains, v2_contains):
+        for v_char, v2_char in zip(self.v_contains, version_2.v_contains):
             try:
                 v_char = int(v_char)
                 v2_char = int(v2_char)
@@ -80,58 +81,6 @@ class Version:
         else:
             return False
 
-    def __gt__(self, version_2):
-        v_contains = self.version.split(".")
-        v2_contains = version_2.version.split(".")
-
-        for v_char, v2_char in zip(v_contains, v2_contains):
-            try:
-                v_char = int(v_char)
-                v2_char = int(v2_char)
-                if v_char > v2_char:
-                    return True
-            except ValueError:
-                v_char = str(v_char)
-                v2_char = str(v2_char)
-                if v_char == v2_char:
-                    continue
-                
-                v_char = self.prepare_char(v_char)
-                v2_char = self.prepare_char(v2_char)
-
-                if v_char["version_num"] > v2_char["version_num"]:
-                    return True
-                elif v_char["version_num"] < v2_char["version_num"]:
-                    return False
-                
-                if v_char["dash"] and v2_char["dash"]:
-                    if self.VERSION_ORDER.get(v_char["version_stage"]) > self.VERSION_ORDER.get(v2_char["version_stage"]):
-                        return True
-                    else: 
-                        return False
-                
-                if v_char["version_num"] == -1 and v2_char["version_num"] == -1:
-                    return True if self.VERSION_ORDER.get(v_char["version_stage"]) \
-                        > self.VERSION_ORDER.get(v2_char["version_stage"]) else False
-
-                if not v_char["dash"] and v2_char["dash"]:
-                    return True
-                elif v_char["dash"] and not v2_char["dash"]:
-                    return False
-            
-                if "dig-char" in v_char.keys() and "dig-char" in v2_char.keys():
-                    if v_char["version_stage"] > v2_char["version_stage"]:
-                        return True
-                    else:
-                        return False
-
-                if v_char["version_stage"] and v2_char["version_stage"] is None:
-                    return True
-                else:
-                    return False
-        else:
-            return False
-
     def __eq__(self, version_2):
         v_contains = self.version.split(".")
         v2_contains = version_2.version.split(".")
@@ -140,15 +89,6 @@ class Version:
                 return False
         else:
             return True
-    
-    def __ne__(self, version_2):
-        v_contains = self.version.split(".")
-        v2_contains = version_2.version.split(".")
-        for v_char, v2_char in zip(v_contains, v2_contains):
-            if v_char != v2_char:
-                return True
-        else:
-            return False
 
 def main():
     to_test = [
