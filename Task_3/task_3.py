@@ -1,25 +1,26 @@
 from threading import Thread, Lock
+import time
+import concurrent.futures
 
-threadLock = Lock()
-a = 0
 
-def function(arg):
-    threadLock.acquire()
-    global a
+def function(arg, a):
     for _ in range(arg):
         a += 1
-    threadLock.release()
-
+    return a
 
 def main():
+    start_time = time.time()
+    a = 0
     threads = []
-    for i in range(5):
-        thread = Thread(target=function, args=(1000000,))
-        thread.start()
-        threads.append(thread)
-
-    [t.join() for t in threads]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        for i in range(5):
+            future = executor.submit(function, 1000000, a)
+            threads.append(future)
+        for thread in concurrent.futures.as_completed(threads):
+            a += thread.result()
+            
     print("----------------------", a)
+    print("Result time:", time.time() - start_time)
 
 if __name__ == "__main__":
     main()
